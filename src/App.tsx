@@ -24,22 +24,45 @@ function App() {
 
     setLoading(true);
     try {
-      const prompt = `Create a pitch deck for the following business idea: ${idea}. Format the response as JSON strictly.`;
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: prompt,
-      });
       
-      const text = response.text.trim();
-      const match = text.match(/```json\n([\s\S]*?)\n```/);
-      
-      if (match) {
-        setSlides(JSON.parse(match[1]).slides);
-        toast.success('Pitch deck generated successfully!');
-      } else {
-        throw new Error("Invalid JSON");
+      const prompt = `Create a pitch deck for the following business idea: ${idea}. 
+      Format the response as JSON with the following structure for 8 slides:
+      {
+        "slides": [
+          {
+            "title": "slide title",
+            "content": ["point 1", "point 2", "point 3"]
+          }
+        ]
       }
+      Include slides for: Problem, Solution, Market Size, Business Model, Competition, Go-to-Market Strategy, Team, and Financial Projections.
+      IMPORTANT NOTE :- THE RESPONSE SHOULD BE VALID JSON ONLY SUCH THAT JSON.PARSE() should be able to decode it`;
+const response = await ai.models.generateContent({
+    model: "gemini-2.0-flash",
+    contents: prompt,
+  });
+      const text = response.text.trim();
+      console.log(text)
+      const match = text.match(/```json\n([\s\S]*?)\n```/);
+      console.log(match)
+if (match) {
+  try {
+   const parsedResponse = JSON.parse(match[1]);
+      setSlides(parsedResponse.slides);
+      toast.success('Pitch deck generated successfully!');
+  } catch (error) {
+    throw new Error("Invalid Json")
+    console.error("Invalid JSON:", error);
+  }
+} else {
+      throw new Error("Invalid Json")
+}
+
+      
+      // Parse the JSON response
+      
     } catch (error) {
+      console.error('Error generating pitch deck:', error);
       toast.error('Failed to generate pitch deck. Please try again.');
     } finally {
       setLoading(false);
